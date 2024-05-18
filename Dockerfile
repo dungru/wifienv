@@ -1,17 +1,13 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # Install required packages and dependencies
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install python3.7 -y
-# Add 3.7 to the available alternatives
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
-# Set python3.7 as the default python
-RUN update-alternatives --set python3 /usr/bin/python3.7
 RUN apt-get update && apt-get install -y \
     build-essential \
     make \
     gawk \
     wget \
+    git \
     git-core \
     diffstat \
     unzip \
@@ -21,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     bison \
     curl \
     cpio \
+    python3 \
     python3-pip \
     python3-pexpect \
     xz-utils \
@@ -30,19 +27,28 @@ RUN apt-get update && apt-get install -y \
     python3-jinja2 \
     libegl1-mesa \
     libsdl1.2-dev \
-    pylint3 \
     xterm \
     locales \
     cmake \
     rsync \
-    gcc-7-aarch64-linux-gnu \
+    gcc-11-aarch64-linux-gnu \
     gcc-aarch64-linux-gnu \
     device-tree-compiler \
     python3-subunit mesa-common-dev zstd liblz4-tool file libacl1 \
     lib32stdc++6 libevent-dev libpulse-dev libsdl1.2-dev libstdc++6 ninja-build python3-pexpect rpm2cpio socat texinfo libdivsufsort-dev libbz2-dev \
-    uuid-dev clang-6.0 clang-format \
-    gettext libfile-slurp-perl libncurses-dev autoconf doxygen libtool automake libpcre3-dev libbz2-dev subversion minicom putty rpm python-pexpect \
-    python-svn python-argparse tofrodos meld dos2unix ruby transfig libglib2.0-dev xutils-dev autopoint python-dulwich python-dev cpio python-yaml swig
+    uuid-dev python3-pyelftools \
+    gettext libfile-slurp-perl libncurses-dev autoconf doxygen libtool automake libpcre3-dev libbz2-dev subversion minicom putty rpm \
+    python-argparse tofrodos meld dos2unix ruby transfig libglib2.0-dev xutils-dev autopoint cpio swig \
+    libnuma-dev libpcap-dev meson pkg-config tar net-tools tcpreplay 
+
+# Install clang-format
+RUN apt-get update && apt-get install -y --no-install-recommends  \
+    clang-15 libclang-common-15-dev libclang-cpp15    	          \
+    libllvm15 llvm-15-linker-tools libclang1-15                   \
+    llvm-15 llvm-15-runtime llvm-15-linker-tools make             \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN ln -vsnf /usr/lib/llvm-15/bin/clang /usr/bin/clang
+RUN ln -vsnf /usr/lib/llvm-15/bin/llc /usr/bin/llc
 
 # Install JAVA
 ## This is in accordance to :
@@ -63,6 +69,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/cache/oracle-jdk8-installer;
 
+## Update python3 pip
+RUN python3 -m pip install --upgrade pip setuptools wheel && pip install pyelftools
+
+RUN apt-get -y update \
+ && apt-get -y install meson g++ ca-certificates -y --no-install-recommends \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN pip3 install meson
 # Settings
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen
