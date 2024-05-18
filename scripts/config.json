@@ -1,0 +1,24 @@
+{
+    "tarballs": {
+      "xxx.tar.xz": "xxx"
+    },
+    "directories": {
+      "SDK_BASE_DIR": "",
+      "DL_BASE_DIR": "",
+      "PACKAGE_BASE_DIR": ""
+    },
+    "commits": {
+      "OPENWRT_COMMIT": "295c612",
+      "PACKAGE_COMMIT": "c10f3e3",
+      "LUCI_COMMIT": "0ecaf74",
+      "ROUTING_COMMIT": "4e2bdb4",
+      "MTK_OPENWRT_FEEDS_COMMIT": "91c043c"
+    },
+    "buildOptions": {
+      "PROJECT_NAME": "",
+      "BUILD_ARGUMENT": ""
+    },
+    "dcc_release": {
+      "DCC_SDK_RELEASE_TARBALL_NAME": ""
+    }
+  }

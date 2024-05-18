@@ -6,33 +6,74 @@
 # Author: Dungru Tsai
 # Email: octobersky.tw@gmail.com
 
+# Start from the directory of the script
+CURRENT_DIR=$PWD
+WORKING_DIR=""
+# Loop to move up the directory tree
+while [ "$CURRENT_DIR" != "/" ]; do
+    # Look for the YOSIMITE file in the current directory
+    file_path=$(find "$CURRENT_DIR" -maxdepth 1 -type f -name "YOSEMITE" 2>/dev/null)
+
+    # Check if the file was found
+    if [ -n "$file_path" ]; then
+        # Extract the directory path from the full file path
+        WORKING_DIR=$(dirname "$file_path")
+        break
+    else
+        # Move up one directory level
+        CURRENT_DIR=$(dirname "$CURRENT_DIR")
+    fi
+done
+###############################
+#### USER Config.json START####
+###############################
+CONFIG_FILE="$WORKING_DIR/scripts/config.json"
+
+# Check if the config file exists
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Error: Configuration file '$CONFIG_FILE' not found."
+    exit 1
+fi
+
+# Use the Python helper script to read values from the JSON config
+read_json_value() {
+    python3 $WORKING_DIR/scripts/json_parser.py "$CONFIG_FILE" "$@"
+}
+
+# Read the associative array tarballs
+declare -A tarballs
+while IFS='=' read -r key value; do
+    tarballs["$key"]="$value"
+done < <(read_json_value "tarballs")
+
+# Read other variables
+SDK_BASE_DIR=$WORKING_DIR/$(read_json_value "directories" "SDK_BASE_DIR")
+DL_BASE_DIR=$WORKING_DIR/$(read_json_value "directories" "DL_BASE_DIR")
+PACKAGE_BASE_DIR=$WORKING_DIR/$(read_json_value "directories" "PACKAGE_BASE_DIR")
+OPENWRT_DIR="$WORKING_DIR/openwrt-real"
+
+OPENWRT_COMMIT=$(read_json_value "commits" "OPENWRT_COMMIT")
+PACKAGE_COMMIT=$(read_json_value "commits" "PACKAGE_COMMIT")
+LUCI_COMMIT=$(read_json_value "commits" "LUCI_COMMIT")
+ROUTING_COMMIT=$(read_json_value "commits" "ROUTING_COMMIT")
+MTK_OPENWRT_FEEDS_COMMIT=$(read_json_value "commits" "MTK_OPENWRT_FEEDS_COMMIT")
+
+PROJECT_NAME=$(read_json_value "buildOptions" "PROJECT_NAME")
+BUILD_ARGUMENT=$(read_json_value "buildOptions" "BUILD_ARGUMENT")
+
+DCC_SDK_RELEASE_TARBALL_NAME=$(read_json_value "dcc_release" "DCC_SDK_RELEASE_TARBALL_NAME")
+###############################
+##### USER Config.json END#####
+###############################
+
 # Initialize variables for option flags and parameters
 init_value=0
 prepare_value=0
 apply_value=0
 build_value=0
-untar_value=0
+untar_dl_value=0
+untar_sdk_value=0
 clean_up_value=0
-# Define an associative array where the key is the source tarball and the value is the target directory
-# Only put the Original DCC Release tarball that we care
-declare -A tarballs=(
-    ["mt7915_20221209-a9012a.tar.xz"]="mt7915_mt_wifi"
-    ["mt79xx_20221209-b9c02f.tar.xz"]="mt_wifi"
-)
-# Directory
-SDK_BASE_DIR="mtk-wifi-mt79xx"
-DL_BASE_DIR="mtk-wifi-mt79xx/dl"
-PACKAGE_BASE_DIR="mtk-wifi-mt79xx/package"
-# Official DCC Release Note Commit
-OPENWRT_COMMIT="295c612"
-PACKAGE_COMMIT="c10f3e3"
-LUCI_COMMIT="0ecaf74"
-ROUTING_COMMIT="4e2bdb4"
-MTK_OPENWRT_FEEDS_COMMIT="91c043c"
-# Build SDK options
-PROJECT_NAME="mt7986-AX8400"
-BUILD_ARGUMENT="5g"
-
 # Function to display usage information
 usage() {
     echo "Usage: $(basename $0) [-i|--init] [-p|--prepare] [-a|--apply] [-b|--build]"
@@ -41,19 +82,29 @@ usage() {
     echo "  -a, --apply           COPY the SDK into the openwrt source from SDK folder"
     echo "  -b, --build           Build project"
     echo "  -c, --clean_up        Clean up DCC tarballs and Restore the PKG_SOURCE to original DCC release version"
-    echo "  --untar               Untar DL source tarball to target directory"
+    echo "  --untar_dl            Untar DL source tarball to target directory"
+    echo "  --untar_sdk           Untar SDK to SDK_BASE_DIR from DCC_SDK_RELEASE_TARBALL_NAME"
     echo "  --tar                 Tar DL source directories into their respective tarballs"
     exit 1
 }
 
 ################## Function ##################
-untar() {
+untar_dl() {
+    local source_tarball="$1"
+    local target_dir_name="$2"
+
+    echo "Untarring $source_tarball to $DL_BASE_DIR/$target_dir_name"
+    mkdir -p "$DL_BASE_DIR/$target_dir_name"
+    tar --exclude-vcs -xvf "$DL_BASE_DIR/$source_tarball" -C "$DL_BASE_DIR/$target_dir_name"
+}
+
+untar_sdk() {
     local source_tarball="$1"
     local target_dir="$2"
 
     echo "Untarring $source_tarball to $target_dir"
-    mkdir -p "$DL_BASE_DIR/$target_dir"
-    tar --exclude-vcs -xvf "$DL_BASE_DIR/$source_tarball" -C "$DL_BASE_DIR/$target_dir"
+    mkdir -p "$target_dir"
+    tar -xvf "$WORKING_DIR/$source_tarball" -C "$target_dir" --strip-components=1
 }
 
 # Function to tar a new tarball and change the new PKG_SOURCE
@@ -85,16 +136,26 @@ tar_dir() {
 # Get Openwrt and source options
 
 get_source() {
-    git clone --branch openwrt-21.02 https://git.openwrt.org/openwrt/openwrt.git
-    pushd openwrt
-    git checkout $OPENWRT_COMMIT
+    # Check if the openwrt-real.tgz and directory exists
+    if [[ ! -d "$OPENWRT_DIR" && -f "openwrt-real.tgz" ]]; then
+        echo "Directory $OPENWRT_DIR does not exist. Unpacking tarball..."
+        tar -xzf openwrt-real.tgz || { echo "Failed to unpack openwrt-real.tgz"; exit 1; }
+    fi
+    # Clone the OpenWRT repository if tarball not avalible
+    if [[ ! -d "$OPENWRT_DIR" ]]; then
+        git clone --branch openwrt-21.02 https://git.openwrt.org/openwrt/openwrt.git "$OPENWRT_DIR"
+    fi
+    # Change to the OpenWRT directory
+    pushd "$OPENWRT_DIR" || { echo "Failed to change directory to $OPENWRT_DIR"; exit 1; }
+    # Checkout the specified commit or branch
+    git checkout "$OPENWRT_COMMIT"
     git checkout -b $OPENWRT_COMMIT
     popd
 }
 
 # Prepare the feeds
 prepare_feeds() {
-    pushd openwrt/
+    pushd $OPENWRT_DIR/
     sed -i 's/feeds.conf.default$/feeds.conf/' ./autobuild/lede-build-sanity.sh
     cp feeds.conf.default feeds.conf
     echo "src-git packages https://git.openwrt.org/feed/packages.git^$PACKAGE_COMMIT" > feeds.conf
@@ -108,7 +169,7 @@ prepare_feeds() {
 # 1st time buils
 
 build_1st_time() {
-    pushd openwrt/
+    pushd $OPENWRT_DIR/
     dockerq ./autobuild/$PROJECT_NAME/lede-branch-build-sanity.sh $BUILD_ARGUMENT
     popd
 }
@@ -137,7 +198,7 @@ fi
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
 
-        -s|--source)
+        -i|--init)
             init_value=1
             ;;
         -p|--prepare)
@@ -149,11 +210,14 @@ while [[ "$#" -gt 0 ]]; do
         -b|--build)
             build_value=1
             ;;
-        --untar)
-            untar_value=1
+        --untar_dl)
+            untar_dl_value=1
             ;;
         --tar)
             tar_value=1
+            ;;
+        --untar_sdk)
+            untar_sdk_value=1
             ;;
         -c|--clean_up)
             clean_up_value=1
@@ -181,9 +245,9 @@ fi
 
 if [[ "${apply_value}" -eq 1 ]]; then
     echo "Option -a/--apply was triggered"
-    rsync -av $SDK_BASE_DIR/ openwrt/
+    rsync -av $SDK_BASE_DIR/ $OPENWRT_DIR/
     for source_tarball in "${!tarballs[@]}"; do
-        rm -rf "openwrt/dl/${tarballs[$source_tarball]}"
+        rm -rf "$OPENWRT_DIR/dl/${tarballs[$source_tarball]}"
     done
     prepare_feeds
 fi
@@ -199,9 +263,13 @@ if [[ "${build_value}" -eq 1 ]]; then
     build_1st_time
 fi
 
-if [[ "${untar_value}" -eq 1 ]]; then
+if [[ "${untar_sdk_value}" -eq 1 ]]; then
+    untar_sdk $DCC_SDK_RELEASE_TARBALL_NAME $SDK_BASE_DIR
+fi
+
+if [[ "${untar_dl_value}" -eq 1 ]]; then
     for source_tarball in "${!tarballs[@]}"; do
-        untar "$source_tarball" "${tarballs[$source_tarball]}"
+        untar_dl "$source_tarball" "${tarballs[$source_tarball]}"
     done
 fi
 
