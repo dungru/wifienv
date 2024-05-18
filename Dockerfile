@@ -2,6 +2,11 @@ FROM ubuntu:18.04
 
 # Install required packages and dependencies
 ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install python3.7 -y
+# Add 3.7 to the available alternatives
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
+# Set python3.7 as the default python
+RUN update-alternatives --set python3 /usr/bin/python3.7
 RUN apt-get update && apt-get install -y \
     build-essential \
     make \
@@ -16,7 +21,6 @@ RUN apt-get update && apt-get install -y \
     bison \
     curl \
     cpio \
-    python3 \
     python3-pip \
     python3-pexpect \
     xz-utils \
@@ -39,6 +43,7 @@ RUN apt-get update && apt-get install -y \
     uuid-dev clang-6.0 clang-format \
     gettext libfile-slurp-perl libncurses-dev autoconf doxygen libtool automake libpcre3-dev libbz2-dev subversion minicom putty rpm python-pexpect \
     python-svn python-argparse tofrodos meld dos2unix ruby transfig libglib2.0-dev xutils-dev autopoint python-dulwich python-dev cpio python-yaml swig
+
 # Install JAVA
 ## This is in accordance to :
 ##     https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04
