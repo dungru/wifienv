@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y \
     locales \
     cmake \
     rsync \
+    gcc-arm-linux-gnueabi \
     gcc-7-aarch64-linux-gnu \
     gcc-aarch64-linux-gnu \
     device-tree-compiler \
