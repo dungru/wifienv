@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     git-core \
     diffstat \
+    flex \
     unzip \
     texinfo \
     chrpath \
@@ -41,6 +42,7 @@ RUN apt-get update && apt-get install -y \
     gettext libfile-slurp-perl libncurses-dev autoconf doxygen libtool automake libpcre3-dev libbz2-dev subversion minicom putty rpm python-pexpect \
     python-svn python-argparse tofrodos meld dos2unix ruby transfig libglib2.0-dev xutils-dev autopoint python-dulwich python-dev cpio python-yaml swig
 
+RUN apt-get --no-install-recommends install -y ca-certificates
 # Install JAVA
 ## This is in accordance to :
 ##     https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04
