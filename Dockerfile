@@ -14,7 +14,10 @@ RUN apt-get update && apt-get install -y \
     texinfo \
     chrpath \
     socat \
+    swig \
     bison \
+    libssl-dev \
+    python-dev \
     curl \
     cpio \
     python3 \
