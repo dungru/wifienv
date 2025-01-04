@@ -12,8 +12,7 @@ RUN apt-get update && apt-get install -y \
     flex \
     unzip \
     texinfo \
-    libc6-dev-i386 \
-    libc6-dev \
+    libc6 \
     chrpath \
     socat \
     swig \
