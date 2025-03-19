@@ -1,6 +1,5 @@
 # Getting Start
 Install docker from the website https://docs.docker.com/engine/install/
-![image](https://github.com/user-attachments/assets/2e2b5f7f-5dcd-4b67-8776-f95e778b2b46)
 
 ## Add user to docker group
 ```
