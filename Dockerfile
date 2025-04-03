@@ -4,10 +4,7 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     build-essential \
-    make \
-    gawk \
-    wget \
-    git \
+    make gawk wget git \
     git-core \
     diffstat \
     unzip \
@@ -39,7 +36,13 @@ RUN apt-get update && apt-get install -y \
     uuid-dev python3-pyelftools \
     gettext libfile-slurp-perl libncurses-dev autoconf doxygen libtool automake libpcre3-dev libbz2-dev subversion minicom putty rpm \
     python-argparse tofrodos meld dos2unix ruby transfig libglib2.0-dev xutils-dev autopoint cpio swig \
-    libnuma-dev libpcap-dev meson pkg-config tar net-tools tcpreplay 
+    libnuma-dev libpcap-dev meson pkg-config tar net-tools tcpreplay \
+    libssl-dev zlib1g-dev flex python3-distutils python3-setuptools
+
+RUN apt-get update && \
+    apt-get install -y g++ gcc gcc-multilib g++-multilib && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install clang-format
 RUN apt-get update && apt-get install -y --no-install-recommends  \
