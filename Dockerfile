@@ -15,7 +15,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     cpio \
     python3 \
+    python3-dev \
     python3-pip \
+    python3-setuptools \
     python3-pexpect \
     xz-utils \
     debianutils \
@@ -37,13 +39,13 @@ RUN apt-get update && apt-get install -y \
     gettext libfile-slurp-perl libncurses-dev autoconf doxygen libtool automake libpcre3-dev libbz2-dev subversion minicom putty rpm \
     python-argparse tofrodos meld dos2unix ruby transfig libglib2.0-dev xutils-dev autopoint cpio swig \
     libnuma-dev libpcap-dev meson pkg-config tar net-tools tcpreplay \
-    libssl-dev zlib1g-dev flex python3-distutils python3-setuptools
+    libssl-dev zlib1g-dev flex python3-distutils
 
 RUN apt-get update && \
     apt-get install -y g++ gcc gcc-multilib g++-multilib && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
+RUN python3 -m pip install --upgrade setuptools
 # Install clang-format
 RUN apt-get update && apt-get install -y --no-install-recommends  \
     clang-15 libclang-common-15-dev libclang-cpp15    	          \
