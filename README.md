@@ -1,10 +1,10 @@
 # wifienv
 - Build the docker Image
 
-  `./wifienv build`
+  `./dockerq build`
 - Copy the wifienv to /usr/bin
 
-    `sudo cp wifienv /usr/bin/`
+    `sudo cp dockerq /usr/bin/dockerq22`
 - Start to use the build environment
 
-    `wifienv <your makefile command>`
+    `dockerq22 <your makefile command>`
