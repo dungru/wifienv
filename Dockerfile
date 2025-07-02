@@ -54,7 +54,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends  \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN ln -vsnf /usr/lib/llvm-15/bin/clang /usr/bin/clang
 RUN ln -vsnf /usr/lib/llvm-15/bin/llc /usr/bin/llc
-
+RUN git config --global http.sslVerify false
 # Install JAVA
 ## This is in accordance to :
 ##     https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-get-on-ubuntu-16-04
