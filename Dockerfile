@@ -35,8 +35,6 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     python3-git \
     python3-jinja2 \
-    libegl1-mesa \
-    libsdl1.2-dev \
     xterm \
     locales \
     cmake \
@@ -82,6 +80,7 @@ RUN apt-get update && apt-get install -y \
     autopoint \
     cpio \
     swig \
+    libsdl1.2-dev \
     ca-certificates \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -99,6 +98,7 @@ RUN if [ "$UBUNTU_VERSION" = "18.04" ]; then \
         python-dulwich \
         python-dev \
         python-yaml \
+        libegl1-mesa \
     && apt-get clean && rm -rf /var/lib/apt/lists/* ; \
 fi
 
@@ -119,6 +119,7 @@ RUN if [ "$UBUNTU_VERSION" = "22.04" ]; then \
         tcpreplay \
         zlib1g-dev \
         python3-distutils \
+        libegl1-mesa \
         g++ \
         gcc \
         clang-15 \
@@ -132,6 +133,28 @@ RUN if [ "$UBUNTU_VERSION" = "22.04" ]; then \
     ln -vsnf /usr/lib/llvm-15/bin/clang /usr/bin/clang && \
     ln -vsnf /usr/lib/llvm-15/bin/llc /usr/bin/llc ; \
 fi
+
+RUN if [ "$UBUNTU_VERSION" = "24.04" ]; then \
+    apt-get update && \
+    apt-get install -y \
+        python3-dev \
+        python3-setuptools \
+        gcc-11-aarch64-linux-gnu \
+        python3-pyelftools \
+        libnuma-dev \
+        libpcap-dev \
+        meson \
+        pkg-config \
+        tar \
+        net-tools \
+        tcpreplay \
+        zlib1g-dev \
+        g++ \
+        gcc \
+        clang-15 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* ; \
+fi
+
 
 # Install JAVA (common for both versions)
 RUN apt-get update && \

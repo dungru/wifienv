@@ -30,3 +30,16 @@ docker run hello-world
 
 - Start to use the build environment
     `dockerq22 <your makefile command>`
+
+## Build 24.04 Docker
+- Build the docker Image
+  `./dockerq24 build`
+
+- Copy the dockerq to /usr/bin
+    `sudo cp dockerq24 /usr/bin/`
+
+- Start to use the build environment
+    `dockerq24 <your makefile command>`
+
+- Remove the docker Image
+  `./dockerq24 remove`
